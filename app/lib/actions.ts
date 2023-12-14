@@ -1,4 +1,5 @@
-'use server';
+"use server";
+
 /* 
     grazie alla direttiva presente all'internodi react 'use server', 
     tutte le funzioni che questo file esporta vengono eseguite direttamente nel server.
@@ -14,8 +15,11 @@
  
 export async function createInvoice(formData: FormData) {
   // tip della documentazione
-  const rawFormData = Object.fromEntries(formData.entries()); 
-
+  const rawFormData = {
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  };
   // Test it out:
   console.log(rawFormData);
 }
