@@ -3,6 +3,7 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'; 
 // hook che permette di utilizzare i paramteri della ricerca.
+import { useDebouncedCallback } from 'use-debounce';
 
 export default function Search({ placeholder }: { placeholder: string }) {
 
@@ -11,21 +12,20 @@ export default function Search({ placeholder }: { placeholder: string }) {
   const { replace } = useRouter();
 
 
-  function handleSearch(term: string) { // funzione che si prende in carico di getsire la ricerca.
+  const handleSearch = useDebouncedCallback((term: string) => { // funzione che si prende in carico di getsire la ricerca.
     // console.log() usa la console del client, non del server...questo in quanto
     // search.tsx è un componente client.
 
-    console.log(term); 
+    console.log(`Searching: ${term}`); 
     const params = new URLSearchParams(searchParams);
-
+    params.set('page', '1');
     if (term) {
       params.set('query', term);
     } else {
       params.delete('query');
     }
     replace(`${pathname}?${params.toString()}`);
-    console.log(pathname);
-  }
+  }, 300);
 
   return (
     <div className="relative flex flex-1 flex-shrink-0">
