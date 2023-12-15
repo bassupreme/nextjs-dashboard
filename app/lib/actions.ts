@@ -34,9 +34,9 @@ const FormSchema = z.object({
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 
 export async function createInvoice(formData: FormData) {
-    // tip della documentazione
 
-    const {customerId, amount, status} = CreateInvoice.parse({
+    // tip della documentazione
+    const { customerId, amount, status } = CreateInvoice.parse({
         customerId: formData.get('customerId'),
         amount: formData.get('amount'),
         status: formData.get('status'),
@@ -45,11 +45,18 @@ export async function createInvoice(formData: FormData) {
     const amountInCents = amount * 100; // aumnetare la precisione
     const date = new Date().toISOString().split('T')[0];
 
-    await sql`
+
+    try {
+        await sql`
     INSERT INTO invoices (customer_id, amount, status, date)
     VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
   `;
 
+    } catch (e) {
+        return {
+            message: "Something went wrong with the database."
+        };
+    }
     revalidatePath('/dashboard/invoices'); // pulire la cache
     /* 
         questo vine fatto in quanto, nella cache vi è un route segment 
@@ -57,36 +64,55 @@ export async function createInvoice(formData: FormData) {
         è stato messo nella cache per favorire una navigazione più veloce.
         Una volta aggiornati i dati, non facendo quest'operazione la cache
         conterrebbe ancora una pagina contenente i dati vecchi.
-    */ 
+    */
     redirect('/dashboard/invoices');
 
-
 }
+
 // Use Zod to update the expected types
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
  
 // ...
- 
+
 export async function updateInvoice(id: string, formData: FormData) {
-  const { customerId, amount, status } = UpdateInvoice.parse({
-    customerId: formData.get('customerId'),
-    amount: formData.get('amount'),
-    status: formData.get('status'),
-  });
- 
-  const amountInCents = amount * 100;
- 
-  await sql`
+
+    const { customerId, amount, status } = UpdateInvoice.parse({
+        customerId: formData.get('customerId'),
+        amount: formData.get('amount'),
+        status: formData.get('status'),
+    });
+
+    const amountInCents = amount * 100;
+
+    try {
+        await sql`
     UPDATE invoices
     SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
     WHERE id = ${id}
   `;
- 
-  revalidatePath('/dashboard/invoices');
-  redirect('/dashboard/invoices');
+    } catch (e) {
+        return {
+            message: "Something went wrong with the database."
+        };
+    }
+    revalidatePath('/dashboard/invoices');
+    redirect('/dashboard/invoices');
+
 }
 
 export async function deleteInvoice(id: string) {
-    await sql`DELETE FROM invoices WHERE id = ${id}`;
-    revalidatePath('/dashboard/invoices');
+    
+    throw new Error('Failed to Delete Invoice'); // praticamente tutto quello che viene dopo non viene eseguito
+
+    try {
+        await sql`DELETE FROM invoices WHERE id = ${id}`;
+        revalidatePath('/dashboard/invoices');
+        return {
+            message: `Inovice with ${id} succesfully deleted`,
+        };
+    } catch (e) {
+        return {
+            message: "Something went wrong with the database."
+        };
+    }
 }
